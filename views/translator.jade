@@ -1,0 +1,13 @@
+extends layout
+
+block content
+	h1 Welcome to the translator page!
+
+	form(id="", method="post", action="/translateRequest")
+		input(type="text", name="startLang", placeholder="Starting language")
+		input(type="text", name="endLang", placeholder="Translated language")
+		input(type="text", name="word", placeholder="Word")
+		input(type="submit")
+
+
+	p=translation

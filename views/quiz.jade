@@ -1,0 +1,36 @@
+extends layout 
+
+block content
+	h1 Quiz Page
+	h4 #nailit
+
+	input.getQuiz(type="text" name="quizFromLanguage" placeholder="Translate From")
+	input.getQuiz(type="text" name="quizToLanguage" placeholder="Translate To")
+
+	button.getQuiz#getQuiz Get Quiz 
+	
+	.quizContainer
+		p Question #
+			span#q-count
+		h5#q-word
+			small#from-language
+		input#q-guess(type="text" name="quizAnswer")
+		button#submitAnswer Submit
+		
+		.responseContainer
+			if incorrect
+				p
+					strong Incorrect.
+					|  The correct translation is:
+					em #{correction}
+			else
+				p
+					strong Correct!
+					|  Well done
+				if correctWarning
+					br
+					em But... #{correctWarning}
+			button#nextQuestion Next Question
+			
+
+
