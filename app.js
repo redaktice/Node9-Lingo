@@ -27,6 +27,7 @@ app.post('/translateRequest', translatorController.translate);
 // QUIZ PAGE
 app.get('/getQuizCodes', quizController.getQuizCodes);
 app.get('/getWord', quizController.getWord);
+app.get('/getAnswer', quizController.getAnswer);
 
 var server = app.listen(3929, function() {
 	console.log('Express server listening on port ' + server.address().port);

@@ -6,9 +6,11 @@ var beglobal = new BeGlobal.BeglobalAPI({
 
 
 var translatorController = {
-
+	// Translate the submitted word between the two languages
 	translate: function(req, res) {
-		var baseLang, finalLang;
+		
+		// First get the language codes
+		var fromLangCode, toLangCode;
 
 		beglobal.languages.all(
 			function(err, results) {
@@ -16,46 +18,38 @@ var translatorController = {
 					return console.log(err);
 				}
 
-			
-
 				for (var i = 0; i < results.length; i++) {
 			
 					var result = results[i].from;
 
-					if (result.name.toLowerCase() === req.body.startLang.toLowerCase()) {
-						baseLang = result.code;
+					if (result.name.toLowerCase() === req.body.startLang.toLowerCase() || result.code === req.body.startLang.toLowerCase()) {
+						fromLangCode = result.code;
 					}
-					if (result.name.toLowerCase() === req.body.endLang.toLowerCase()) {
-						finalLang = result.code;
+					if (result.name.toLowerCase() === req.body.endLang.toLowerCase() || result.code === req.body.endLang.toLowerCase()) {
+						toLangCode = result.code;
 					}
-					if (baseLang && finalLang) {
+					if (fromLangCode && toLangCode) {
 						break;
 					}
 				}
 
-				if (!baseLang || !finalLang) {
+				if (!fromLangCode || !toLangCode) {
 					res.redirect('/translator?translation=No%20Language%20Found');
 					return;
 				}
 
-		beglobal.translations.translate(
-			{text: req.body.word, from: baseLang, to: finalLang},
-			function(err, results) {
-				if (err) {
-					return console.log(err);
-				}
-
-				res.redirect('/translator?translation=' + results.translation);
+				// Now translate using the language codes
+				beglobal.translations.translate(
+					{text: req.body.word, from: fromLangCode, to: toLangCode},
+					function(err, results) {
+						if (err) {
+							return console.log(err);
+						}
+						// Send back the translation results as a query
+						res.redirect('/translator?translation=' + results.translation);
+					});
 			});
-			});
-
-
-	
-
 	}
 };
 
 module.exports = translatorController;
-
-
-
