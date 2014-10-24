@@ -1,13 +1,79 @@
 var BeGlobal = require('node-beglobal');
 var RandomWords = require('random-words');
+var helperFunction = require ('../models/helperFunction.js');
 var _ = require('underscore');
 
 var beglobal = new BeGlobal.BeglobalAPI({
 	api_token: 'L%2Fgazni9IdrYgLXwkm3EGg%3D%3D'
 });
 
+
+// Takes in a guess and answer that do not fully match and checks to see if they are off by just one character
+// Creates a return object conntaining boolean 'correct', number 'index' of the error, string 'correction' of what was neeeded to correct the answer, and string 'answer'
 var checkOneLetterOff = function(guess, answer) {
-	// put stuff here
+	var guessA = guess.split('');
+	var answerA = answer.split('');
+
+	var letterSwap = function(index){
+		var tempLetter = guessA[index];
+		guessA[index] = guessA[index+1];
+		guessA[index+1] = tempLetter;
+		return guessA;
+	};
+
+	for (var i = 0; i < guessA.length; i++) {
+		if (answerA[i] === guessA[i]) {
+			continue;
+		}
+
+		// Insert Letter
+		guessA.splice(i, 0, answerA[i]);
+		if (guessA.toString() === answerA.toString()) {
+			// Return WIN
+			console.log('Insert WIN');
+			return {correct: true, correction: 'insert', index: i, answer: answer};
+		}
+
+		// console.log("Guess Array POST Insert", guessA);
+		guessA = guess.split('');
+		// console.log("Guess Array Reset Insert", guessA);
+
+
+		// Swap adjacent letters
+		if (letterSwap(i).toString() === answerA.toString()) {
+			// Return WIN
+			console.log('Swap WIN');
+			return {correct: true, correction: 'swap', index: i, answer: answer};
+		}
+		// console.log("Guess Array POST Swap", guessA);
+		guessA = guess.split('');
+		// console.log("Guess Array Reset Swap", guessA);
+
+		// Delete one letter
+		guessA.splice(i,1);
+		if (guessA.toString() === answerA.toString()) {
+			// Return WIN
+			console.log('Delete WIN');
+			return {correct: true, correction: 'delete', index: i, answer: answer};
+		}
+		// console.log("Guess Array POST Delete", guessA);
+		guessA = guess.split('');
+		// console.log("Guess Array Reset Delete", guessA);
+// console.log(guessA.splice(i,1, answerA[i]));
+
+		// Replace one letter
+		guessA.splice(i,1, answerA[i]);
+		if (guessA.toString() === answerA.toString()) {
+			// Return WIN
+			// console.log('Replace WIN');
+			return {correct: true, correction: 'replace', index: i, answer: answer};
+		}
+		// console.log("Guess Array POST Replace", guessA);
+
+		// Return you suck
+		// console.log('You suck');
+		return {correct: false, answer: answer};
+	}
 };
 
 var quizController = {
@@ -61,9 +127,9 @@ var quizController = {
 	getAnswer: function(req, res) {
 
 		var correctAnswer;
-
+		var strippedWord = helperFunction.stripAccent(req.query.quizWord);
 		beglobal.translations.translate(
-			{text: req.query.quizWord, from: req.query.from, to: req.query.to},
+			{text: strippedWord, from: req.query.from, to: req.query.to},
 			function(err, results) {
 				if (err) {
 					return console.log(err);
@@ -72,20 +138,22 @@ var quizController = {
 				correctAnswer = results.translation;
 
 				// Create a partial mistake for a "two strikes you're out" policy
-				var partialMistake = false;
+				// var partialMistake = false;
 				
 				// Check the answer
 				if (req.query.quizGuess.toLowerCase() === correctAnswer.toLowerCase()){
-					res.send({correct: true});
+					res.send({correct: true, answer: correctAnswer.toLowerCase()});
 				}
 				else {
-					// Call helper function that runs through 4 tests, returning correct if it passes any of them (one character off) and also returns the type information, we then res.send the return value
-					// The helper function returns line 84 if it fails all 4 tests
+					var correction = checkOneLetterOff(req.query.quizGuess.toLowerCase(), correctAnswer.toLowerCase());
+					res.send(correction);
 				}
-				// else {
-				// 	res.send({correct: false, quizWord: req.query.quizWord, corrected: correctAnswer});
-				// }
 			});
+	},
+
+	// Write the quiz object into the database
+	saveQuiz: function(req, res) {
+		// Do stuff here
 	}
 };
 

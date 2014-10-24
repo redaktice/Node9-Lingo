@@ -16,7 +16,7 @@ block content
 		h3#q-word
 		h5#q-from-lang
 		input#q-guess(type="text" name="quizAnswer")
-		button#submitAnswer Submit
+		button#submit-answer Submit
 		
 		.responseContainer
 			p#a-response
@@ -25,4 +25,25 @@ block content
 			button#restart-quiz New Quiz
 			
 
+	.summaryContainer
+		h2 Your Quiz Summary
+		h3#pass-fail HIIIIII
+		h4#pass-fail-sub
 
+		div.summary
+			ul
+				//- for question in questions
+				//- 	li
+				//- 		h3 Translate from: #{question.fromLang}
+				//- 		h3 Translate to: #{question.toLang}
+				//- 		h4 Starting Word #{question.q-word}
+				//- 		h5 You're Answer #{question.q-guess}
+				//- 		if question.correct && !question.correction
+				//- 			h4 Correct!
+				//- 		else if question.correct
+				//- 			h4 Correct!
+				//- 			p Be careful, watch this tiny mistake!
+				//- 				p=correction
+				//- 		else
+				//- 			h4 Incorrect
+				//- 			p The correct answer was #{correct}

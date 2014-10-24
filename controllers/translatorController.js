@@ -1,4 +1,5 @@
 var BeGlobal = require('node-beglobal');
+var helperFunction = require('../models/helperFunction.js');
 
 var beglobal = new BeGlobal.BeglobalAPI({
 	api_token: 'L%2Fgazni9IdrYgLXwkm3EGg%3D%3D'
@@ -38,9 +39,11 @@ var translatorController = {
 					return;
 				}
 
+				var strippedWord = helperFunction.stripAccent(req.body.word);
+
 				// Now translate using the language codes
 				beglobal.translations.translate(
-					{text: req.body.word, from: fromLangCode, to: toLangCode},
+					{text: strippedWord, from: fromLangCode, to: toLangCode},
 					function(err, results) {
 						if (err) {
 							return console.log(err);
