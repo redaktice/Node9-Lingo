@@ -1,3 +1,5 @@
+
+
 // Global variables on the quiz.js page
 var questionCount, questionsWrong, currentChallengeWord, fromLangCode, toLangCode;
 
@@ -33,7 +35,7 @@ var getQuestion = function(fromLang, toLang) {
 
 // Quiz page jQuery
 $(document).on('ready', function() {
-	
+
 	// Hide the quiz container until you enter a language
 	// USE CSS TO HIDE THESE USING DISPLAY NONE INITIALLY TO AVOID LOAD FLICKER
 	$('.quizContainer').hide();
@@ -45,7 +47,8 @@ $(document).on('ready', function() {
 	// event handler for the get quiz button
 	$('#get-quiz').on('click', function(e) {
 
-		questionCount = questionsWrong = 0;
+		questionCount = 0;
+		questionsWrong = 0;
 
 		var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
 		var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
@@ -77,6 +80,15 @@ $(document).on('ready', function() {
 
 		var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
 		var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+
+		quizObj = {
+			user: 'SuperUser', // change this to a current user when we have activation
+			words: []
+		};
+
+		// Update the quiz object
+		quizObj.fromLang = fromLang;
+		quizObj.toLang = toLang;
 
 		$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
 			fromLangCode = quizCodes.from;
@@ -194,17 +206,17 @@ $(document).on('ready', function() {
 				correct: answerObj.correct, // Boolean 
 				correction: correctionResponse // String
 			});
-
 			// If the quiz is over, send to the database
-			if (questionCount === 10 || questionsWrong === 3) {
+			if (questionCount === 10 || questionsWrong >= 3) {
 				// Give a pass or fail
-				if (questionsWrong === 3) {
+				if (questionsWrong >= 3) {
 					quizObj.pass = false;
 				}
 				else {
 					quizObj.pass = true;
 				}
 				// Post to save quiz, no callback function needed
+				// $.post('/saveQuiz', {data: JSON.stringify(quizObj)}, function(){}, 'json');
 				$.post('/saveQuiz', quizObj, function(){});
 			}
 

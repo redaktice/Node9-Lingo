@@ -2,6 +2,8 @@ var BeGlobal = require('node-beglobal');
 var RandomWords = require('random-words');
 var helperFunction = require ('../models/helperFunction.js');
 var _ = require('underscore');
+var Quiz = require ('../models/quizesModel.js');
+var User = require ('../models/userModel.js');
 
 var beglobal = new BeGlobal.BeglobalAPI({
 	api_token: 'L%2Fgazni9IdrYgLXwkm3EGg%3D%3D'
@@ -137,9 +139,6 @@ var quizController = {
 
 				correctAnswer = results.translation;
 
-				// Create a partial mistake for a "two strikes you're out" policy
-				// var partialMistake = false;
-				
 				// Check the answer
 				if (req.query.quizGuess.toLowerCase() === correctAnswer.toLowerCase()){
 					res.send({correct: true, answer: correctAnswer.toLowerCase()});
@@ -153,7 +152,47 @@ var quizController = {
 
 	// Write the quiz object into the database
 	saveQuiz: function(req, res) {
-		// Do stuff here
+
+		// Create a new Quiz model object using the passed data, save it into the database, and update the entry for the user who took the quiz
+		var newQuiz = new Quiz(req.body);
+		newQuiz.save(function(err, result) {
+			if (err) {
+				console.log(err);
+			}
+
+			var userwords = User.find({username: results.username}, function(err, userResult) {
+				
+				// Go through each word in the quiz
+				for (var i = 0; i < result.words.length; i++) {
+					
+					// If the user already has the word, update the counts
+					if (result.words[i].word in userResult.words) {
+						userResult.words[result.words[i].word].total++;
+						if (result.words[i].correct) {
+							userResult.words[result.words[i].word].correctCount++;
+						}
+						else {
+							userResult.words[result.words[i].word].incorrectCount++;
+						}
+
+					}
+					// If they do not have the word, add it
+					else {
+						userResult.words[result.words[i].word] = {
+							total: 1,
+							correctCount: result.words[i].correct && 1 || 0,
+							incorrectCount: result.words[i].correct && 0 || 1
+						};
+					}
+					// Save it back to the user database
+					userResult.save();
+				}
+			});
+			// User.update({username: result.username}, {$inc: {quizCount: 1, quizCorrect: (result.pass && 1 || 0), wordCount: result.words.length}}, {$push: {quizzes: result._id}});
+
+			res.send({});
+		});
+
 	}
 };
 

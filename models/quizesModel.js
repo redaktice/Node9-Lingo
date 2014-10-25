@@ -4,8 +4,14 @@ var quizSchema = mongoose.Schema({
 		fromLang: String,
 		toLang: String,
 		user: String,
-		words: Array,
-		pass: boolean
+		words: [{
+			word: String,
+			answer: String,
+			guess: String,
+			correct: Boolean,
+			correction: String
+		}],
+		pass: Boolean
 });
 
 
