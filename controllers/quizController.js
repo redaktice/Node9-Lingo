@@ -10,6 +10,12 @@ var beglobal = new BeGlobal.BeglobalAPI({
 });
 
 
+var recentWordList = [];
+var worstWordList = [];
+var leastWordList = [];
+
+
+
 // Takes in a guess and answer that do not fully match and checks to see if they are off by just one character
 // Creates a return object conntaining boolean 'correct', number 'index' of the error, string 'correction' of what was neeeded to correct the answer, and string 'answer'
 var checkOneLetterOff = function(guess, answer) {
@@ -106,49 +112,121 @@ var quizController = {
 				res.send({to: toLangCode, from: fromLangCode});
 			});
 	},
+	setQuiz: function (req, res) {
+
+		Quiz.find({username: 'SuperUser'}, function(err, quizzes) {
+
+			if (quizzes) {
+				User.findOne({username: 'SuperUser'}, function(err, user) {
+
+					if (!user.languages[req.query.from + '-' + req.query.to]) {
+				user.languages[req.query.from + '-' + req.query.to] = {};
+			}
+	console.log("From", req.query.from);
+	console.log("To", req.query.to);
+
+	console.log("User", user);
+
+					var currentUserLangs = user.languages[req.query.from + '-' + req.query.to];
+
+	console.log("User Langs", currentUserLangs);
+
+						recentWordList = currentUserLangs.recentWords ? currentUserLangs.recentWords : [];
+						worstWordList = currentUserLangs.worstWords || [];
+						leastWordList = currentUserLangs.leastWords || [];
+
+
+
+					var relevantQuizzes = _.where(quizzes, {fromLangCode: req.query.from,toLangCode: req.query.to}) || [];
+					
+							// Add the quiz meta-data to the return obj
+						res.send({
+							numberOfQuizzes: relevantQuizzes.length
+						});
+				});
+			}
+
+			else {
+				res.send({
+					numberOfQuizzes: 0
+				});
+
+			}
+		});
+	},
 	// Get the next word
 	getWord: function(req, res) {
 
-	User.findOne({username: req.query.username}, function(err, user) {
 
-		var currentUserLangs = user[req.query.from + '-' + req.query.to];
-		var randomWord = "";
+console.log('Get Word Called');
+		User.findOne({username: req.query.username}, function(err, user) {
 
-		switch(req.query.quiztype) {
-			case 'recentWords':
-				var recentWordList = currentUserLangs.recentWordList;
-				_.shuffle(recentWordList);
-				randomWord = recentWordList.pop();
-				break;
-			case 'worstWords':
-				var worstWordList = currentUserLangs.worstWords;
-				_.shuffle(worstWordList);
-				randomWord = worstWordList.pop();
-				break;
-			case 'leastWords':
-				var leastWordList = currentUserLangs.leastWords;
-				_.shuffle(leastWordList);
-				randomWord = leastWordList.pop();
-				break;
-			default: 
-				randomWord = RandomWords();
-		}
+
+			var currentUserLangs = user.languages[req.query.from + '-' + req.query.to];
+			var randomWord = "";
+	console.log("Quiz Type:", req.query.quizType);
+			switch(req.query.quizType) {
+				case 'recentWords':
+					// var recentWordList = currentUserLangs.recentWords;
+	console.log('Recent', recentWordList.length);
+					recentWordList = _.shuffle(recentWordList);
+					randomWord = recentWordList.length > 0 ? recentWordList.pop() : RandomWords();
+	console.log('Recent Post Pop', recentWordList.length);
+
+	console.log('Random Word', randomWord);
+					break;
+				case 'worstWords':
+					// var worstWordList = currentUserLangs.worstWords;
+	console.log('Worst', worstWordList);
+					worstWordList = _.shuffle(worstWordList);
+					randomWord = worstWordList.length > 0 ? worstWordList.pop().word : RandomWords();
+	console.log('Random Word', randomWord);
+
+					break;
+				case 'leastWords':
+					// var leastWordList = currentUserLangs.leastWords;
+	console.log('Least', leastWordList);
+					leastWordList = _.shuffle(leastWordList);
+					randomWord = leastWordList.length > 0 ? leastWordList.pop().word : RandomWords();
+	console.log('Random Word', randomWord);
+
+					break;
+				default: 
+					randomWord = RandomWords();
+			}
 			// If the user wants a word in english, return a random word
 			if (req.query.from === 'eng') {
 				// res.send(RandomWords());
 				res.send(randomWord);
 			}
 			
-			// If the from language is not english, translate the random word and return it
-			beglobal.translations.translate(
-				{text: randomWord, from: 'eng', to: req.query.from},
-				function(err, results) {
-					if (err) {
-						return console.log(err);
-					}
+			if (req.query.quizType === "random") {
+	console.log("Random");
+				// If the from language is not english, translate the random word and return it
+				beglobal.translations.translate(
+					{text: randomWord, from: 'eng', to: req.query.from},
+					function(err, results) {
+						if (err) {
+							return console.log(err);
+						}
 
-					res.send(results.translation);
-				});
+						res.send(results.translation);
+					});
+			}
+			else {
+						// If the from language is not english, translate the random word and return it
+				// beglobal.translations.translate(
+				// 	{text: randomWord, from: req.query.from, to: req.query.from},
+				// 	function(err, results) {
+				// 		if (err) {
+				// 			return console.log(err);
+				// 		}
+
+						res.send(randomWord);
+					// });
+			}
+								user.save(function(err, result) {});
+
 		});
 	},
 	// Check to see if the answer is correct and return information
@@ -187,13 +265,13 @@ var quizController = {
 
 			var userwords = User.findOne({username: result.username}, function(err, userResult) {
 				
-				// console.log(userResult);
-				var currentUserLangs = userResult[req.body.fromLangCode + '-' + req.body.toLangCode];
+				var currentUserLangs = userResult.languages[req.body.fromLangCode + '-' + req.body.toLangCode];
+				
 				if (!currentUserLangs) {
-					userResult[req.body.fromLangCode + '-' + req.body.toLangCode] = {
+					userResult.languages[req.body.fromLangCode + '-' + req.body.toLangCode] = {
 						words: {}
 					};
-				currentUserLangs = userResult[req.body.fromLangCode + '-' + req.body.toLangCode];
+				currentUserLangs = userResult.languages[req.body.fromLangCode + '-' + req.body.toLangCode];
 				}
 
 				// Go through each word in the quiz
@@ -217,24 +295,29 @@ var quizController = {
 							total: 1,
 							correctCount: result.words[i].correct && 1 || 0,
 							incorrectCount: !result.words[i].correct && 1 || 0,
-							// fromLangCode: req.body.fromLangCode,
-							// toLangCode: req.body.toLangCode
 						};
 					}
-					if (currentUserLangs.recentWords.indexOf(result.words[i].word) < 0 || currentUserLangs.recentWords.length <0) {
-						currentUserLangs.recentWords.pop();
+
+					// If there aren't recent words for this language combo, create an empty array
+					if (!currentUserLangs.recentWords) {
+						currentUserLangs.recentWords = [];
+					}
+					// Check to see if the current word is in the user's recent words, and if not, add it in (popping off if there's already 10 words) 
+					if (currentUserLangs.recentWords.indexOf(result.words[i].word) < 0) {
+						if (currentUserLangs.recentWords.length === 10) {
+							currentUserLangs.recentWords.pop();
+						}
+						// Add in the current word
 						currentUserLangs.recentWords.unshift(result.words[i].word);
 					}
 				}
-
-				
 
 				var allWordsGrouped = _.groupBy(currentUserLangs.words, function(word) {
 					return word.correctCount > 0 ? 'correct': 'incorrect';
 				});
 
 				// Get the top 10 words correctly translated
-				currentUserLangs.worstWords = _.sortBy(allWordsGrouped.correct, function(word) {
+				currentUserLangs.bestWords = _.sortBy(allWordsGrouped.correct, function(word) {
 						return -1 * word.correctCount;
 					}).slice(0,10);
 
@@ -248,15 +331,14 @@ var quizController = {
 					}).slice(0,10);
 
 
-					userResult.markModified('words');
+					userResult.markModified('languages');
 					// Save it back to the user database
 					userResult.save(function(e, saveresult) {
 						console.log(saveresult);
+						res.send({});
 					});
 			
 			// User.update({username: result.username}, {$inc: {quizCount: 1, quizCorrect: (result.pass && 1 || 0), wordCount: result.words.length}}, {$push: {quizzes: result._id}});
-
-			res.send({});
 			});
 		});
 	}

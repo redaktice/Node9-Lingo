@@ -33,31 +33,30 @@ var getQuestion = function(fromLangCode, toLangCode, type) {
 	});
 };
 
-// var generateQuiz = function(type) {
-// 	questionCount = 0;
-// 	questionsWrong = 0;
+var generateQuiz = function(type) {
+	questionCount = 0;
+	questionsWrong = 0;
 
-// 	var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
-// 	var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+	var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
+	var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
 
-// 	// Update the quiz object
-// 	quizObj.fromLang = fromLang;
-// 	quizObj.toLang = toLang;
+	$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+		fromLangCode = quizCodes.from;
+		toLangCode = quizCodes.to;
 
-// 	$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
-// 	fromLangCode = quizCodes.from;
-// 	toLangCode = quizCodes.to;
+		// Update the quiz object
+		quizObj.fromLangCode = fromLangCode;
+		quizObj.toLangCode = toLangCode;
+		
+	getQuestion(fromLang, toLang, type);
 
-
-// 	getQuestion(fromLang, toLang, type, 'random');
-
-// 		$('.getQuiz').fadeOut('1000', function() {
-// 			// Toggle the quiz in once the get quiz is toggled out
-// 			$('.quizContainer').fadeIn(1000);
-// 			$('.responseContainer').hide();
-// 		});
-// 	});
-// };
+		$('.getQuiz').fadeOut('1000', function() {
+			// Toggle the quiz in once the get quiz is toggled out
+			$('.quizContainer').fadeIn(1000);
+			$('.responseContainer').hide();
+		});
+	});
+};
 
 
 // Quiz page jQuery
@@ -68,6 +67,7 @@ $(document).on('ready', function() {
 	$('.quizContainer').hide();
 	$('.responseContainer').hide();
 	$('.summaryContainer').hide();
+	$('.advanced-quiz').hide();
 
 	/*--------------------------MAKE QUIZ---------------------------------*/
 
@@ -76,61 +76,121 @@ $(document).on('ready', function() {
 
 		questionCount = 0;
 		questionsWrong = 0;
-		quizType = 'random';
 
 		var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
 		var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
 
+
+
+		$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+					fromLangCode = quizCodes.from;
+		toLangCode = quizCodes.to;
+
+		// Update the quiz object
+		quizObj.fromLangCode = fromLangCode;
+		quizObj.toLangCode = toLangCode;
 		
 
-		// 
-		$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
-			fromLangCode = quizCodes.from;
-			toLangCode = quizCodes.to;
+			$.get('/setQuiz', {username: 'SuperUser', from: fromLangCode, to: toLangCode}, function(quizNumber){
+	console.log("Total quizzes:", quizNumber.numberOfQuizzes);
+				if (quizNumber.numberOfQuizzes >= 3) {
+					$('.advanced-quiz').show(1000);
+					$('#get-quiz').hide(1000);
 
-			// Update the quiz object
-			quizObj.fromLangCode = fromLangCode;
-			quizObj.toLangCode = toLangCode;
+	console.log("There are at least 3 quizzes");
+				}
 
-			getQuestion(fromLangCode, toLangCode, quizType);
-			
-			$('.getQuiz').fadeOut('1000', function() {
-				// Toggle the quiz in once the get quiz is toggled out
-				$('.quizContainer').fadeIn(1000);
-				$('.responseContainer').hide();
+				else {
+
+	console.log("There fewer than 3 quizzes");
+				generateQuiz('random');
+				quizType = 'random';
+				}
 			});
 		});
 
+		// questionCount = 0;
+		// questionsWrong = 0;
+		// quizType = 'random';
+
+		// var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
+		// var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+
+		
+
+		// // 
+		// $.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+		// 	fromLangCode = quizCodes.from;
+		// 	toLangCode = quizCodes.to;
+
+		// 	// Update the quiz object
+		// 	quizObj.fromLangCode = fromLangCode;
+		// 	quizObj.toLangCode = toLangCode;
+
+		// 	getQuestion(fromLangCode, toLangCode, quizType);
+			
+		// 	$('.getQuiz').fadeOut('1000', function() {
+		// 		// Toggle the quiz in once the get quiz is toggled out
+		// 		$('.quizContainer').fadeIn(1000);
+		// 		$('.responseContainer').hide();
+		// 	});
+		// });
+
+	});
+
+	// event handler for the get quiz button
+	$('#get-random-quiz').on('click', function(e) {
+
+		quizType = 'random';
+		generateQuiz(quizType);
 	});
 
 
 
 	// event handler for the get quiz button
-		$('#get-best-quiz').on('click', function(e) {
+		$('#get-recent-quiz').on('click', function(e) {
 
-			questionCount = 9;
-			questionsWrong = 0;
+			quizType="recentWords";
+			generateQuiz(quizType);
 
-			var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
-			var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+			// questionCount = 0;
+			// questionsWrong = 0;
 
-			// Update the quiz object
-			quizObj.fromLang = fromLang;
-			quizObj.toLang = toLang;
+			// var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
+			// var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
 
-			// 
-			$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
-				fromLangCode = quizCodes.from;
-				toLangCode = quizCodes.to;
+			// // Update the quiz object
+			// quizObj.fromLang = fromLang;
+			// quizObj.toLang = toLang;
 
-				getQuestion(fromLangCode, toLangCode, 'worstWords');
+			// // 
+			// $.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+			// 	fromLangCode = quizCodes.from;
+			// 	toLangCode = quizCodes.to;
+
+			// 	getQuestion(fromLangCode, toLangCode, 'recentWords');
 				
-				$('.getQuiz').fadeOut('1000', function() {
-					// Toggle the quiz in once the get quiz is toggled out
-					$('.quizContainer').fadeIn(1000);
-					$('.responseContainer').hide();
-				});
-			});
+			// 	$('.getQuiz').fadeOut('1000', function() {
+			// 		// Toggle the quiz in once the get quiz is toggled out
+			// 		$('.quizContainer').fadeIn(1000);
+			// 		$('.responseContainer').hide();
+			// 	});
+			// });
+
+		});
+
+// event handler for the get quiz button
+		$('#get-worst-quiz').on('click', function(e) {
+
+			quizType = "worstWords";
+			generateQuiz(quizType);
+
+		});
+
+		$('#get-least-quiz').on('click', function(e) {
+
+			quizType = "leastWords";
+			generateQuiz(quizType);
 
 		});
 
@@ -304,13 +364,28 @@ $(document).on('ready', function() {
 		$('#q-guess').val('');
 
 		// Get another question
-		$.get('/getWord', {username: 'SuperUser', from: fromLangCode, to: toLangCode, quizType: quizType}, function(challengeWord){
+		// $.get('/getWord', {username: 'SuperUser', from: fromLangCode, to: toLangCode, quizType: quizType}, function(challengeWord){
 			
 			getQuestion(fromLangCode, toLangCode, quizType);
-		});
+		// });
 		
 		// Maybe put these into a cb within our ajax get
 		$('.responseContainer').fadeToggle('fast');
 		$('#correction').remove();
 	});
+
+
+	/*--------------------------RESET PROGRESS---------------------------------*/
+
+	$('#reset-progress').on('click', function() {
+
+	// Get another question
+		$.get('/resetProgress', {username: 'SuperUser', from: fromLangCode, to: toLangCode, quizType: quizType}, function(resetStatus){
+			console.log(resetStatus);
+			if (resetStatus === 'Progress Reset') {
+				window.location.assign('/');
+			}
+		});
+	});
+
 });

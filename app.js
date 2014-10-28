@@ -22,8 +22,11 @@ mongoose.connect('mongodb://localhost/lingoProject');
 app.get('/', indexController.index);
 app.get('/translator', indexController.toTranslator);
 app.get('/quiz', indexController.toQuiz);
-// For progress, get data, which will redirect to render the jade template
+
+
+// PROGRESS
 app.get('/progress', progressController.getProgressData);
+app.get('/resetProgress', progressController.resetProgress);
 
 // TRANSLATION PAGE
 app.post('/translateRequest', translatorController.translate);
@@ -33,6 +36,7 @@ app.get('/getQuizCodes', quizController.getQuizCodes);
 app.get('/getWord', quizController.getWord);
 app.get('/getAnswer', quizController.getAnswer);
 app.post('/saveQuiz', quizController.saveQuiz);
+app.get('/setQuiz', quizController.setQuiz);
 
 // PROGRESS PAGE
 app.get(''); // Handle the redirect -> progress.jade render
