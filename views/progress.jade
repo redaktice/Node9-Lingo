@@ -1,4 +1,40 @@
 extends layout
 
 block content
-	h1 #{}
+	h1 My Progress
+	for toFromCombo in progressData
+		h2 Quizzes:
+			ul
+				li Total Number of quizzes: #{toFromCombo.totalQuizzes}
+				li Percentage correct: #{toFromCombo.percentagePassed}%
+				li Passed Quizzes: #{toFromCombo.passedQuizzes}
+					//- if passedQuizzes
+					//- 	ul
+					//- 		for quiz in quizzes
+					//- 			li quiz
+				li Failed Quizzes: #{toFromCombo.failedQuizzes}
+					//- if failedQuizzes
+					//- 	ul
+					//- 		for quiz in failedQuizzes
+					//- 			li quiz
+		h2 Words:
+			ul
+				li Total Number of Words: #{toFromCombo.totalWords}
+				li Percentage Correctly Translated: #{toFromCombo.percentageWords}%
+				li Correctly Translated Words: #{toFromCombo.correctWordsCount}
+				li My Best Words:
+					if bestWords
+						ul
+							for word in bestWords
+								li=word.word
+				
+				li Incorrectly Translated Words: #{toFromCombo.failWordsCount}
+				li My Worst Words:
+					if worstWords
+						ul
+							for word in worstWords
+								li=word.word
+				
+
+	a.go-home(href="/"): button Return Home
+	button#empty-profile Reset my progress

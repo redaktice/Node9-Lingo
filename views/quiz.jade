@@ -8,7 +8,9 @@ block content
 		input(type="text" name="quizFromLanguage" placeholder="Translate From")
 		input(type="text" name="quizToLanguage" placeholder="Translate To")
 
-		button#get-quiz Get Quiz 
+		button#get-quiz Get Quiz
+		button#get-best-quiz Create Top 10 Quiz
+		button#get-worst-quiz Create Worst 10 Quiz
 	
 	.quizContainer
 		p Question #
@@ -24,6 +26,8 @@ block content
 
 			button#restart-quiz New Quiz
 			
+	a.go-home(href="/"): button Return Home
+
 
 	.summaryContainer
 		h2 Your Quiz Summary

@@ -1,17 +1,17 @@
 
 
 // Global variables on the quiz.js page
-var questionCount, questionsWrong, currentChallengeWord, fromLangCode, toLangCode;
+var questionCount, questionsWrong, currentChallengeWord, fromLangCode, toLangCode, quizType;
 
 var quizObj = {
-	user: 'SuperUser', // change this to a current user when we have activation
+	username: 'SuperUser', // change this to a current user when we have activation
 	words: []
 };
 
 // Helper function for initializing a new quiz
 
-var getQuestion = function(fromLang, toLang) {
-	$.get('/getWord', {from: fromLangCode}, function(challengeWord){
+var getQuestion = function(fromLangCode, toLangCode, type) {
+	$.get('/getWord', {username: 'SuperUser', from: fromLangCode, to: toLangCode, quizType: type}, function(challengeWord){
 		// Update question count and current challenge word
 		questionCount++;
 		currentChallengeWord = challengeWord;
@@ -23,15 +23,42 @@ var getQuestion = function(fromLang, toLang) {
 		$('#q-word').text('Translate: "' + challengeWord + '"');
 
 		// Only need to display these when the function is called with parameters (first word)
-		if (fromLang && toLang) {
+		if (fromLangCode && toLangCode) {
 			// Display the from language
-			$('#q-from-lang').text('from ' + fromLang);
+			$('#q-from-lang').text('from ' + fromLangCode);
 
 			// Changing the placeholder
-			$('#q-guess').val('').attr('placeholder', 'Translate to ' + toLang);
+			$('#q-guess').val('').attr('placeholder', 'Translate to ' + toLangCode);
 		}
 	});
 };
+
+// var generateQuiz = function(type) {
+// 	questionCount = 0;
+// 	questionsWrong = 0;
+
+// 	var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
+// 	var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+
+// 	// Update the quiz object
+// 	quizObj.fromLang = fromLang;
+// 	quizObj.toLang = toLang;
+
+// 	$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+// 	fromLangCode = quizCodes.from;
+// 	toLangCode = quizCodes.to;
+
+
+// 	getQuestion(fromLang, toLang, type, 'random');
+
+// 		$('.getQuiz').fadeOut('1000', function() {
+// 			// Toggle the quiz in once the get quiz is toggled out
+// 			$('.quizContainer').fadeIn(1000);
+// 			$('.responseContainer').hide();
+// 		});
+// 	});
+// };
+
 
 // Quiz page jQuery
 $(document).on('ready', function() {
@@ -49,20 +76,23 @@ $(document).on('ready', function() {
 
 		questionCount = 0;
 		questionsWrong = 0;
+		quizType = 'random';
 
 		var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
 		var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
 
-		// Update the quiz object
-		quizObj.fromLang = fromLang;
-		quizObj.toLang = toLang;
+		
 
 		// 
 		$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
 			fromLangCode = quizCodes.from;
 			toLangCode = quizCodes.to;
 
-			getQuestion(fromLang, toLang);
+			// Update the quiz object
+			quizObj.fromLangCode = fromLangCode;
+			quizObj.toLangCode = toLangCode;
+
+			getQuestion(fromLangCode, toLangCode, quizType);
 			
 			$('.getQuiz').fadeOut('1000', function() {
 				// Toggle the quiz in once the get quiz is toggled out
@@ -73,6 +103,43 @@ $(document).on('ready', function() {
 
 	});
 
+
+
+	// event handler for the get quiz button
+		$('#get-best-quiz').on('click', function(e) {
+
+			questionCount = 9;
+			questionsWrong = 0;
+
+			var fromLang = $('.getQuiz input[name="quizFromLanguage"]').val();
+			var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
+
+			// Update the quiz object
+			quizObj.fromLang = fromLang;
+			quizObj.toLang = toLang;
+
+			// 
+			$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
+				fromLangCode = quizCodes.from;
+				toLangCode = quizCodes.to;
+
+				getQuestion(fromLangCode, toLangCode, 'worstWords');
+				
+				$('.getQuiz').fadeOut('1000', function() {
+					// Toggle the quiz in once the get quiz is toggled out
+					$('.quizContainer').fadeIn(1000);
+					$('.responseContainer').hide();
+				});
+			});
+
+		});
+
+
+
+
+
+
+
 		// event handler for the get quiz button
 	$('#restart-quiz').on('click', function(e) {
 
@@ -82,17 +149,19 @@ $(document).on('ready', function() {
 		var toLang = $('.getQuiz input[name="quizToLanguage"]').val();
 
 		quizObj = {
-			user: 'SuperUser', // change this to a current user when we have activation
+			username: 'SuperUser', // change this to a current user when we have activation
 			words: []
 		};
 
-		// Update the quiz object
-		quizObj.fromLang = fromLang;
-		quizObj.toLang = toLang;
 
 		$.get('/getQuizCodes', {from: fromLang, to: toLang}, function(quizCodes) {
 			fromLangCode = quizCodes.from;
 			toLangCode = quizCodes.to;
+
+		// Update the quiz object
+		quizObj.fromLangCode = fromLangCode;
+		quizObj.toLangCode = toLangCode;
+
 
 			getQuestion(fromLang, toLang);
 			
@@ -194,7 +263,7 @@ $(document).on('ready', function() {
 						$('#next-question').hide();
 					}
 					else {
-						$('#a-response').text('Incorrect! The correct answer is ' + answerObj.answer + '. ' + questionsWrong + ' out of ' +questionCount + ' wrong so far.');
+						$('#a-response').text('Incorrect! The correct answer is ' + answerObj.answer + '. ' + questionsWrong + ' out of ' + questionCount + ' wrong so far.');
 					}
 				}
 
@@ -205,6 +274,7 @@ $(document).on('ready', function() {
 				guess: $('#q-guess').val().toLowerCase(), //
 				correct: answerObj.correct, // Boolean 
 				correction: correctionResponse // String
+
 			});
 			// If the quiz is over, send to the database
 			if (questionCount === 10 || questionsWrong >= 3) {
@@ -234,14 +304,13 @@ $(document).on('ready', function() {
 		$('#q-guess').val('');
 
 		// Get another question
-		$.get('/getWord', {from: fromLangCode,}, function(challengeWord){
+		$.get('/getWord', {username: 'SuperUser', from: fromLangCode, to: toLangCode, quizType: quizType}, function(challengeWord){
 			
-			getQuestion();
+			getQuestion(fromLangCode, toLangCode, quizType);
 		});
 		
 		// Maybe put these into a cb within our ajax get
 		$('.responseContainer').fadeToggle('fast');
 		$('#correction').remove();
 	});
-
 });

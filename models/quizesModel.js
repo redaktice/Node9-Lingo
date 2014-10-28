@@ -1,9 +1,9 @@
 var mongoose = require('mongoose');
 
 var quizSchema = mongoose.Schema({
-		fromLang: String,
-		toLang: String,
-		user: String,
+		fromLangCode: String,
+		toLangCode: String,
+		username: String,
 		words: [{
 			word: String,
 			answer: String,

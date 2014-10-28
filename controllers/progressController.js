@@ -11,37 +11,44 @@ var progressController = {
 
 		// Grab all the quizzes with a user's name
 		// When multiple users, grab the user's name from the current ID
-		Quiz.find({user: 'SuperUser'}, function(err, quizzes) {
-			
-			// Add the quiz meta-data to the return obj
-			progressData.totalQuizzes = quizzes.length;
-			progressData.passedQuizzes = _.countBy(quizzes, function(quiz) {
-				return quiz.pass;
-			})[true];
-			progressData.failedQuizzes = progressData.totalQuizzes - progressData.passedQuizzes;
-			progressData.percentagePassed = Math.round(100 * progressData.passedQuizzes / progressData.totalQuizzes);
+		Quiz.find({username: 'SuperUser'}, function(err, quizzes) {
 
-			User.find({username: 'SuperUser'}, function(err, user) {
-				
-				console.log(user);
-				
-				progressData.totalWords = _.keys(user.words).length;
-				progressData.correctWords = _.countBy(user.words, function(word) {
-					return word.correctCount > 0;
-				})[true];
-				progressData.failWords = progressData.totalWords - progressData.correctWords;
-				progressData.percentageWords = Math.round(100 * progressData.correctWords / progressData.totalWords);
-				progressData.bestWords = _.sortBy(user.words, function(word) {
-					return -1 * word.correctCount;
-				}).slice(0,10);
-				progressData.worstWords = _.sortBy(user.words, function(word) {
-					return -1 * word.incorrectCount;
-				}).slice(0,10);
+			User.findOne({username: 'SuperUser'}, function(err, user) {
 
-				res.send(progressData);
+		// console.log(user);
+				for (var toFromCombo in user) {
 
+					var relevantQuizzes = _.where(quizzes, {fromLangCode: toFromCombo.split('-')[0],toLangCode: toFromCombo.split('-')[1]});
+				// Add the quiz meta-data to the return obj
+					progressData[toFromCombo].totalQuizzes = relevantQuizzes.length;
+					progressData[toFromCombo].passedQuizzes = _.countBy(relevantQuizzes, function(quiz) {
+						return quiz.pass;
+					})[true];
+					progressData[toFromCombo].failedQuizzes = progressData[toFromCombo].totalQuizzes - progressData[toFromCombo].passedQuizzes;
+					progressData[toFromCombo].percentagePassed = Math.round(100 * progressData[toFromCombo].passedQuizzes / progressData[toFromCombo].totalQuizzes);
+
+					if (toFromCombo !== 'password' && toFromCombo !== 'username') {
+		
+						progressData[toFromCombo].totalWords = _.keys(user[toFromCombo].words).length;
+						var returnCorrectWords = _.groupBy(user[toFromCombo].words, function(word) {
+							return word.correctCount > 0 ? 'correct': 'incorrect';
+						});
+
+			// console.log("Return Correct", returnCorrectWords);
+						progressData[toFromCombo].correctWordsCount = (returnCorrectWords.correct && returnCorrectWords.correct.length) || 0;
+						progressData[toFromCombo].failWordsCount = progressData[toFromCombo].totalWords - progressData[toFromCombo].correctWordsCount;
+						progressData[toFromCombo].percentageWords = Math.round(100 * progressData[toFromCombo].correctWordsCount / progressData[toFromCombo].totalWords);
+						progressData[toFromCombo].bestWords = user.
+						progressData[toFromCombo].worstWords = _.sortBy(returnCorrectWords.incorrect, function(word) {
+							return -1 * word.incorrectCount;
+						}).slice(0,10);
+						// progressData[toFromCombo].correctWordsCount = 
+		// console.log("Organized Worst", organizedWorstWords);
+						res.render('progress', progressData);
+						console.log(progressData);
+					}
+				}
 			});
-
 		});
 	}
 };
